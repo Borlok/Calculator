@@ -11,7 +11,7 @@ public class ExpressionTransform {
     private LinkedList<String> expressionAsElements;
     private ExpressionValidate validation;
     private final String inputExpression;
-    private final String arithmeticSignsInCurrentExpression = "\\s*[+\\-*/]\\s*";
+    private final String arithmeticSignsInCurrentExpression = "\\s*[ +\\-*/]\\s*";
     private StringBuilder outputExpression;
 
     public ExpressionTransform(String inputExpression) {
@@ -24,10 +24,10 @@ public class ExpressionTransform {
         validation = new ExpressionValidate(inputExpression);
         validation.validateExpressionWithCurrentArithmeticSigns(getArithmeticSignsInCurrentExpression());
 
-        //doPolishNotationFromInputExpression();
+        doPolishNotationFromInputExpression();
     }
 
-    public void doPolishNotationFromInputExpression () {
+    public void doPolishNotationFromInputExpression() {
         parseExpression();
         transformToPolishNotation();
     }
@@ -40,11 +40,11 @@ public class ExpressionTransform {
         operandStack = Arrays.stream(inputExpression.split(getArithmeticSignsInCurrentExpression())).
                 filter(x -> !x.equals(" ") && !x.equals("")).
                 collect(Collectors.toCollection(LinkedList::new));
-
+        System.out.println(operandStack);
         operatorStack = Arrays.stream(inputExpression.split("\\s*\\d\\s*")).
                 filter(x -> !x.equals(".") && !x.equals("") && !x.equals(" ")).
                 collect(Collectors.toCollection(LinkedList::new));
-
+        System.out.println(operatorStack);
         joinElementsOfOperandsAndOperatorsInOneExpression();
     }
 
@@ -55,8 +55,10 @@ public class ExpressionTransform {
             createExpressionAsElementsIfFirstSymbolIsSymbol();
         }
         joinRemainsOperands();
+
     }
 
+    //Менять при реализации минуса
     private boolean isFirstSymbolIsNumber() {
         if (inputExpression.charAt(0) >= '0') {
             return true;
@@ -65,8 +67,8 @@ public class ExpressionTransform {
 
     private void createExpressionAsElementsIfFirstSymbolIsNumber() {
         while (!operatorStack.isEmpty()) {
-            System.out.println(operatorStack);
-            System.out.println(operandStack);
+//            System.out.println(operatorStack);
+//            System.out.println(operandStack);
             expressionAsElements.add(operandStack.pop());
             appendOperatorsInExpressionAsElements();
 //            System.out.println(expressionAsElements);
@@ -76,19 +78,35 @@ public class ExpressionTransform {
     private void createExpressionAsElementsIfFirstSymbolIsSymbol() {
         while (!operatorStack.isEmpty()) {
             appendOperatorsInExpressionAsElements();
-            expressionAsElements.add(operandStack.pop());
+            if (!operandStack.isEmpty()) {
+                expressionAsElements.add(operandStack.pop());
+            }
         }
     }
-
+//    Негативное выражение  - изменить название паттерна и матчера
     private void appendOperatorsInExpressionAsElements() {
         String operator = operatorStack.pop();
+        Pattern pattern = Pattern.compile("\\.*\\(\\s*-\\.*");
+        Matcher matcher = pattern.matcher(operator);
+
         if (operator.length() > 1) {
-            expressionAsElements.addAll(Arrays.stream(operator.split("\\.*")).
-                    filter(x -> !x.equals(" ") && !x.equals("")).
-                    collect(Collectors.toCollection(LinkedList::new)));
+            if (matcher.find()) {
+                expressionAsElements.addAll(Arrays.stream(operator.split("\\.*")).
+                        filter(x -> !x.equals(" ") && !x.equals("")).
+                        collect(Collectors.toCollection(LinkedList::new)));
+
+                expressionAsElements.pollLast();
+                expressionAsElements.add(String.valueOf(0));
+                expressionAsElements.add("-");
+            } else {
+                expressionAsElements.addAll(Arrays.stream(operator.split("\\.*")).
+                        filter(x -> !x.equals(" ") && !x.equals("")).
+                        collect(Collectors.toCollection(LinkedList::new)));
+            }
         } else {
             expressionAsElements.add(operator);
         }
+        System.out.println(expressionAsElements);
     }
 
     private void joinRemainsOperands() {

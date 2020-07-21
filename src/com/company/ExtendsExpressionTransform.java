@@ -1,9 +1,7 @@
 package com.company;
 
-import com.company.exception.WrongOperatorsException;
-
 public class ExtendsExpressionTransform extends ExpressionTransform {
-    private final String arithmeticSignsInCurrentExpression = "\\s*[+\\-*/()]\\s*";
+    private final String arithmeticSignsInCurrentExpression = "\\s*[ +\\-*/()]\\s*";
 
     public ExtendsExpressionTransform(String inputExpression) {
         super(inputExpression);
