@@ -2,6 +2,9 @@ package com.company;
 
 import java.util.Scanner;
 
+/**
+ * Этот класс служит для ввода пользовательского выражения и вывода ответа на консоль.
+ */
 public class Expression {
 
     public static String getExpression() {
@@ -10,7 +13,7 @@ public class Expression {
         return sc.nextLine();
     }
 
-    public static void showResult(Double result) {
-        System.out.println("Ответ: " + result);
+    public static void showResult(ExpressionCalculate expressionCalculate) {
+        System.out.println("Ответ: " + expressionCalculate.getSolution());
     }
 }

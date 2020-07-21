@@ -1,5 +1,8 @@
 package com.company;
 
+/**
+ * Этот класс нужен только для демонстрации расширения программы, в котором реализованно применение скобок.
+ */
 public class ExtendsExpressionTransform extends ExpressionTransform {
     private final String arithmeticSignsInCurrentExpression = "\\s*[ +\\-*/()]\\s*";
 
@@ -13,7 +16,7 @@ public class ExtendsExpressionTransform extends ExpressionTransform {
     }
 
     @Override
-    public void ifMatcherFindAnOperator(String operator) {
+    public void transformToPolishNotationIfOperatorIs(String operator) {
         while (!getOperatorStack().isEmpty()) {
             String lastOperator = getOperatorStack().pop();
             if (lastOperator.equals("(")) {
@@ -33,7 +36,6 @@ public class ExtendsExpressionTransform extends ExpressionTransform {
             }
         }
         getOperatorStack().push(operator);
-//        System.out.println(getOutputExpression() + " " + getOperatorStack());
     }
 
     private void ifClosingBracket() {

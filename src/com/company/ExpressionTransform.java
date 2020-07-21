@@ -5,6 +5,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Этот класс служит для преобразования, введенного пользователем выражения в виде строки, в Польскую запись.
+ * Можно разделить на два класса:
+ *      1. Разбиение на элементы входящей строки типа String и возврат списка с элементами типа LinkedList.
+ *      2. Преобразование списка с элементами типа LinkedList в строку в виде Польской записи.
+ */
 public class ExpressionTransform {
     private LinkedList<String> operatorStack;
     private LinkedList<String> operandStack;
@@ -27,7 +33,7 @@ public class ExpressionTransform {
         doPolishNotationFromInputExpression();
     }
 
-    public void doPolishNotationFromInputExpression() {
+    private void doPolishNotationFromInputExpression() {
         parseExpression();
         transformToPolishNotation();
     }
@@ -36,15 +42,15 @@ public class ExpressionTransform {
         return arithmeticSignsInCurrentExpression;
     }
 
-    public void parseExpression() {
+    private void parseExpression() {
         operandStack = Arrays.stream(inputExpression.split(getArithmeticSignsInCurrentExpression())).
                 filter(x -> !x.equals(" ") && !x.equals("")).
                 collect(Collectors.toCollection(LinkedList::new));
-        System.out.println(operandStack);
+
         operatorStack = Arrays.stream(inputExpression.split("\\s*\\d\\s*")).
                 filter(x -> !x.equals(".") && !x.equals("") && !x.equals(" ")).
                 collect(Collectors.toCollection(LinkedList::new));
-        System.out.println(operatorStack);
+
         joinElementsOfOperandsAndOperatorsInOneExpression();
     }
 
@@ -55,23 +61,16 @@ public class ExpressionTransform {
             createExpressionAsElementsIfFirstSymbolIsSymbol();
         }
         joinRemainsOperands();
-
     }
 
-    //Менять при реализации минуса
     private boolean isFirstSymbolIsNumber() {
-        if (inputExpression.charAt(0) >= '0') {
-            return true;
-        } else return false;
+        return inputExpression.charAt(0) >= '0';
     }
 
     private void createExpressionAsElementsIfFirstSymbolIsNumber() {
         while (!operatorStack.isEmpty()) {
-//            System.out.println(operatorStack);
-//            System.out.println(operandStack);
             expressionAsElements.add(operandStack.pop());
             appendOperatorsInExpressionAsElements();
-//            System.out.println(expressionAsElements);
         }
     }
 
@@ -83,30 +82,42 @@ public class ExpressionTransform {
             }
         }
     }
-//    Негативное выражение  - изменить название паттерна и матчера
-    private void appendOperatorsInExpressionAsElements() {
+
+    public void appendOperatorsInExpressionAsElements() {
         String operator = operatorStack.pop();
-        Pattern pattern = Pattern.compile("\\.*\\(\\s*-\\.*");
-        Matcher matcher = pattern.matcher(operator);
+        Pattern negativeNumberPattern = Pattern.compile("\\.*\\(\\s*-\\.*");
+        Pattern negativeNumberPatternWithoutBrackets = Pattern.compile("^-\\.*");
+        Matcher matchNegativeNumber = negativeNumberPattern.matcher(operator);
+        Matcher matchNegativeNumberWithoutBrackets = negativeNumberPatternWithoutBrackets.matcher(operator);
 
         if (operator.length() > 1) {
-            if (matcher.find()) {
-                expressionAsElements.addAll(Arrays.stream(operator.split("\\.*")).
-                        filter(x -> !x.equals(" ") && !x.equals("")).
-                        collect(Collectors.toCollection(LinkedList::new)));
-
-                expressionAsElements.pollLast();
-                expressionAsElements.add(String.valueOf(0));
-                expressionAsElements.add("-");
+            if (matchNegativeNumber.find()) {
+                insertNullBeforeMinus(operator);
             } else {
-                expressionAsElements.addAll(Arrays.stream(operator.split("\\.*")).
-                        filter(x -> !x.equals(" ") && !x.equals("")).
-                        collect(Collectors.toCollection(LinkedList::new)));
+                parseOperatorsOnElements(operator);
             }
         } else {
+            if (matchNegativeNumberWithoutBrackets.find()) {
+                insertNullBeforeMinus(operator);
+            }else
             expressionAsElements.add(operator);
         }
-        System.out.println(expressionAsElements);
+    }
+
+    private void insertNullBeforeMinus(String operator) {
+        expressionAsElements.addAll(Arrays.stream(operator.split("\\.*")).
+                filter(x -> !x.equals(" ") && !x.equals("")).
+                collect(Collectors.toCollection(LinkedList::new)));
+
+        expressionAsElements.pollLast();
+        expressionAsElements.add(String.valueOf(0));
+        expressionAsElements.add("-");
+    }
+
+    private void parseOperatorsOnElements(String operator) {
+        expressionAsElements.addAll(Arrays.stream(operator.split("\\.*")).
+                filter(x -> !x.equals(" ") && !x.equals("")).
+                collect(Collectors.toCollection(LinkedList::new)));
     }
 
     private void joinRemainsOperands() {
@@ -115,14 +126,14 @@ public class ExpressionTransform {
         }
     }
 
-    public void transformToPolishNotation() {
-        Pattern pattern = Pattern.compile("[0-9]");
-        for (int i = 0; i < expressionAsElements.size(); i++) {
-            Matcher matcher = pattern.matcher(expressionAsElements.get(i));
-            if (matcher.find()) {
-                outputExpression.append(expressionAsElements.get(i)).append(" ");
+    private void transformToPolishNotation() {
+        Pattern allNumberPattern = Pattern.compile("[0-9]");
+        for (String expressionAsElement : expressionAsElements) {
+            Matcher matchAllNumber = allNumberPattern.matcher(expressionAsElement);
+            if (matchAllNumber.find()) {
+                outputExpression.append(expressionAsElement).append(" ");
             } else {
-                ifMatcherFindAnOperator(expressionAsElements.get(i));
+                transformToPolishNotationIfOperatorIs(expressionAsElement);
             }
         }
         while (!operatorStack.isEmpty()) {
@@ -130,7 +141,7 @@ public class ExpressionTransform {
         }
     }
 
-    public void ifMatcherFindAnOperator(String operator) {
+    public void transformToPolishNotationIfOperatorIs(String operator) {
         if (!operatorStack.isEmpty()) {
             String lastOperator = operatorStack.pop();
             if (getPriorityOfOperator(lastOperator) < getPriorityOfOperator(operator)) {

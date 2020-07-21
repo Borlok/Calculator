@@ -1,7 +1,12 @@
 package com.company;
 
+import com.company.exception.WrongCalculateException;
 import java.util.Arrays;
 import java.util.LinkedList;
+
+/**
+ * Этот класс получает строку в виде выражения записанного Польской записью, вычисляет и возвращает ответ типа Double.
+ */
 
 public class ExpressionCalculate {
     private LinkedList<String> expressionStack;
@@ -11,30 +16,29 @@ public class ExpressionCalculate {
         solution = new LinkedList<>();
         expressionStack = new LinkedList<>();
         expressionStack.addAll(Arrays.asList(expressionAsPolishNotation.split("\\s")));
-        calculate();
+        try {
+            calculate();
+        } catch (WrongCalculateException e) {
+            e.printStackTrace();
+        }
 
     }
 
-    private void calculate() {
-        for (int i = 0; i < expressionStack.size(); i++) {
-//            System.out.println(expressionStack.get(i) + " isOperand?");
-            if (ifOperand(expressionStack.get(i))) {
-//                System.out.println(expressionStack.get(i) + " isOperand, put the solution");
-                solution.push(Double.valueOf(expressionStack.get(i)));
-//                System.out.println(solution);
-            }else {
-//                System.out.println("No " + expressionStack.get(i) + " isOperator, lets do it!!!");
-                operationWithOperator(expressionStack.get(i));
-//                System.out.println(solution);
+    private void calculate() throws WrongCalculateException {
+        for (String s : expressionStack) {
+            if (ifOperand(s)) {
+                solution.push(Double.valueOf(s));
+            } else {
+                operationWithOperator(s);
             }
         }
     }
-    //Реализовать просчет дабла
+
     private boolean ifOperand(String element) {
         return element.matches("\\d+") || element.matches("\\d*\\.\\d*");
     }
 
-    public void operationWithOperator(String operator) {
+    public void operationWithOperator(String operator) throws WrongCalculateException {
         Double secondNumber = solution.pop();
         Double firstNumber = solution.pop();
 
@@ -48,11 +52,14 @@ public class ExpressionCalculate {
             solution.push(firstNumber * secondNumber);
         }
         if (operator.equals("/")) {
+            if (secondNumber == 0) {
+                throw new WrongCalculateException("Деление на ноль невозможно");
+            }
             solution.push(firstNumber / secondNumber);
         }
     }
 
-    public Double getSolution () {
+    public Double getSolution() {
         return solution.pop();
     }
 

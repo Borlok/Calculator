@@ -7,21 +7,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Этот класс отлавливает ошибки ввода. Реализован отлов не всех ошибок.
+ */
 public class ExpressionValidate {
-    private String inputExpression;
+    private final String inputExpression;
     private String arithmeticSignsInCurrentExpression = "\\s*[ +\\-*/]\\s*";
-    String[] inputOperands;
-    String[] inputOperators;
+    private String[] inputOperands;
+    private String[] inputOperators;
 
     public ExpressionValidate(String expression) {
         inputExpression = expression;
     }
 
-    //Проверить, если после открывающейся скобки стоит не минус
-
     public void validateExpressionWithCurrentArithmeticSigns(String arithmeticSignsInCurrentExpression) {
         this.arithmeticSignsInCurrentExpression = arithmeticSignsInCurrentExpression;
         parseExpressionToElements();
+
         try {
             validateOperands();
             validateOperators();
@@ -38,39 +40,41 @@ public class ExpressionValidate {
 
         inputOperators = Arrays.stream(inputExpression.split("\\s*\\d\\s*")).
                 filter(x -> !x.equals(".") && !x.equals("") && !x.equals(" ")).toArray(String[]::new);
-
-        System.out.println(Arrays.toString(inputOperands));
-        System.out.println(Arrays.toString(inputOperators));
     }
 
-    private void validateOperands() throws WrongOperatorsException {
+    public void validateOperands() throws WrongOperatorsException {
         Pattern pa = Pattern.compile("[^ 0-9.]");
+
         for (String inputOperand : inputOperands) {
             Matcher matcher = pa.matcher(inputOperand);
-//            System.out.println(inputOperand);
+
             if (inputOperand.matches("\\D")) {
                 throw new WrongOperatorsException("Символ " + "[" + inputOperand + "]" + " недопустим в этом выражении");
-            } else if (inputOperand.charAt(0) == '.') {
+            }
+            else if (inputOperand.charAt(0) == '.') {
                 throw new WrongOperatorsException("Символ " + "[" + inputOperand.charAt(0) + "]" +
                         " перед операндом недопустим в этом выражении");
-            } else if (matcher.find()) {
+            }
+            else if (matcher.find()) {
                 throw new WrongOperatorsException("Символ " + "[" + inputOperand + "]" + " недопустим в этом выражении");
             }
         }
     }
 
-    private void validateOperators() throws WrongOperatorsException {
+    public void validateOperators() throws WrongOperatorsException {
         Pattern availableSigns = Pattern.compile(getExceptAvailableArithmeticSignsInCurrentExpression());
-        Pattern negativeNumber = Pattern.compile("\\.*\\(\\s*-\\.*");
+        Pattern negativeNumber = Pattern.compile("\\.*\\(\\s*-");
 
         for (String inputOperator : inputOperators) {
             Matcher matchAvailableSigns = availableSigns.matcher(inputOperator);
             Matcher matchNegativeNumber = negativeNumber.matcher(inputOperator);
+
             String operator = deleteAllBracketsAndEmptySpaceFromInputOperatorAndReturnRemains(inputOperator);
+
             if (inputOperator.equals("(") || inputOperator.equals(")")) {
                 continue;
             }
-            if (matchNegativeNumber.find()){
+            if (matchNegativeNumber.find()) {
                 continue;
             }
             if (operator.length() > 1) {
@@ -90,7 +94,8 @@ public class ExpressionValidate {
     }
 
     private String getExceptAvailableArithmeticSignsInCurrentExpression() {
-        String x = arithmeticSignsInCurrentExpression.substring(arithmeticSignsInCurrentExpression.indexOf("["),
+        String x = arithmeticSignsInCurrentExpression.substring(
+                arithmeticSignsInCurrentExpression.indexOf("["),
                 arithmeticSignsInCurrentExpression.indexOf("]") + 1);
 
         return x.replace("[", "[^");
